@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<!--
+  Copyright 2011 Glamour-Sales China Inc.
+ 
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+ 
+     http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+ 
+  Original: Vitrum.Zhu (vitrum.cn@gmail.com)
+--> 
+<html> 
+  <head> 
+    <meta charset="utf-8" /> 
+    <title>Glamour Sales China v2 test</title> 
+    <link href="css/style.css" rel="stylesheet" type="text/css" /> 
+    <link href="css/jqtransform.css" rel="stylesheet" type="text/css" /> 
+    
+  <!--[if lt IE 9]>
+	<script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<style>
+		.size span{display: inline-block; background-image: url("http://img03.taobaocdn.com/tps/i3/T1ebamXel5XXXXXXXX-20-2400.png"); background-repeat: no-repeat; background-position: 17px -1463px; padding:6px 0 6px 34px; cursor:pointer;}
+		.size .selected{background-position: 17px -1441px; color: #900;}
+		.pager .active{color: red}
+	</style>
+  </head> 
+  <body class="">
+		<header id="branding">
+			<hgroup>
+				<h1 class="logo">Glamour Sales V3 research</h1>
+			</hgroup>
+			<div class="">
+	            <select class="sorter">
+	            	<option value="off">Sorter</option>
+	            	<option value="sortPriceDesc">Price:high to low</option>
+	            	<option value="sortPrice">Price:low to high</option>
+	            	<option value="sortDiscountDesc">Discount:high to low</option>
+	            	<option value="sortDiscount">Discount:low to high</option>
+	            </select>
+                <p>filter</p>
+           		<div class="size">
+           			<span title="S">S</span>
+           			<span title="M">M</span>
+           			<span title="L">L</span>
+           			<span title="X">X</span>
+           			<span title="XL">XL</span>
+           			<input type="hidden" value="" id="size_input" />
+           			<a href="#" class="filter">Submit</a>
+           		</div>
+           		<a href="#" class="clearsize" style="display:none"><span></span>&#160;&#160; CLEAR</a>
+			</div>
+			<div class="pager"></div>
+            <div class="productlist">
+            	<ul class="list">
+                	<li><span class="loading">loading...</span></li>
+                </ul>
+				<div class="clearfix"></div>
+            </div>
+            <div class="clearfix"></div>
+		</header>
+    <div class="dev_info" style=" position:fixed; top:0; left:0; width:300px; height:100px; z-index:999; background:#CCC; display:none ">
+        <div class="info"></div>
+        <div class="tempinfo"></div>
+        <div class="scrollinfo"></div>
+        <div class="addmoreinfo"></div>
+        <input name="showmoreproduct" id="showmoreproduct" value="1" />
+    </div>
+	<script src="jquery-1.6.2.min.js"></script>
+	<script src="jquery-ui-1.8.16.custom.min.js"></script>
+<script>
+
+	var times = []; //time track
+	var info = [];
+	var loadingStr = "<li><span class=\"loading\">loading...</span></li>";
+	var tebtimes = new Date();
+	var pageShow = 33 ;
+		
+	function sortPrice(a,b){  
+		if (a.price == b.price){
+			return 0;
+		}
+		return a.price> b.price ? 1 : -1;  
+	};  
+	function sortPriceDesc(a,b){  
+		return sortPrice(a,b) * -1;  
+	};
+	
+	function sortDiscount(a,b){  
+		if (a.discount == b.discount){
+			return 0;
+		}
+		return a.discount> b.discount ? 1 : -1;  
+	};  
+	function sortDiscountDesc(a,b){  
+		return sortDiscount(a,b) * -1;  
+	};
+	function showLoading(){  
+		$('<ul/>', {
+			'class': 'list',
+			html: loadingStr
+		}).replaceAll('.productlist .list');
+	}; 
+	
+	function productListInit(json,filter){
+		var info = json, _info = json; 
+		//var showMore = Number(filter.showmore);
+		
+
+		var sortkey = filter.sort ? filter.sort : '',
+			filterkey = filter.size ? filter.size : '';
+
+		function filtInfo(info,filter){
+			// filter
+			var temp = info;
+			var newtemp = {};
+			var endtemp = [];
+			if ( filter.size != 'off'){
+				$.each(temp,function(val,key){ 
+					if ( filter.size.split('|').indexOf(key.type) != -1){
+						//alert('temp数组中 ,索引 : '+val+'	 对应的brand为: '+key.brand);
+						newtempm = temp.slice(val,val+1);
+						//endtemp=$.extend(endtemp,newtempm);
+						endtemp.push(temp[val]);
+					}
+				});
+				//info = endtemp;
+				return endtemp;
+			}else{
+				info_filt = []; 
+				return temp;
+			}
+		}
+		function sortInfo(info,filter){
+			switch (filter.sort) 
+			   { 
+			   case 'sortPriceDesc': 
+				 return $(info).sort(sortPriceDesc);
+				 break 
+			   case 'sortDiscount': 
+				 return $(info).sort(sortDiscount);
+				 break 
+			   case 'sortDiscountDesc': 
+				 return $(info).sort(sortDiscountDesc);
+				 break 
+				case 'sortPrice':
+				return $(info).sort(sortPrice);
+				break
+				case 'off':
+				return info;
+				//info = $(info);
+				break
+			   default: 
+				 //info = $(info);
+			} 
+		}	
+
+		if (filterkey != ''){
+			_info = filtInfo(_info,filter);
+		}
+		if (sortkey != ''){
+			_info = sortInfo(_info,filter);
+		}	
+
+		var allCnt = _info.length;
+		var items = [],pager=[];
+
+		if(allCnt < filter.p * pageShow){
+			filter.p = 1;
+		}
+
+		if(allCnt > pageShow){$('.pager').show();}
+		
+		for(var i = 1;i <= allCnt/pageShow + 1; i++)
+			{ 
+						
+					var pageItem = [];
+					for (var j=(i-1)*pageShow; j<i*pageShow; j++){
+						if(j<allCnt && _info[j]){
+							pageItem.push('<li id="' + _info[j].productID + '" class="p-'+  _info[j].price  +' d-'+ _info[j].discount +' b-'+ _info[j].brand +'">' + _info[j].html + '</li>');
+						}						
+					}console.log(pageItem);
+					var _hide = 'style="display:none"';
+					if (i==filter.p){
+						items.push('<ul class="list page-' + i + '">' + pageItem.join('') + '</ul>');
+						pager.push('<a href="#" class="active pager-' + i + '">' + i + '</a>');	
+					}else{
+						items.push('<ul class="list page-' + i + '"'+_hide+'>' + pageItem.join('') + '</ul>');
+						pager.push('<a href="#"  class="pager-' + i + '">' + i + '</a>');
+					}
+
+			}; 
+
+		tebtimes = setTimeout(function(){
+			//$('.origin').text('order:' + productID.join(','));
+			$('.productlist .list').remove();
+			$('.productlist').empty().append(items.join(''));
+			$('.pager').html(pager.join(''));
+			//
+		},100);	
+
+	}
+	
+	function showProductJson(obj,filter) { 
+	
+		var url = obj.url;//+"?random="+Math.random();
+		var tag = obj.tag;
+		var filterrule = filter.rule;
+		var filterKeyBrand = filter.keyvalue;
+		
+		//var morePart = showMorePart();
+		
+		var allCount = 0;
+		
+		var jqxhr = $.getJSON(url, function(data) {})
+		.error(function(data) { //alert("error");
+		})
+		.success(function(data) { 
+			times.push(new Date().getTime());
+			
+			info = data.products;
+			productListInit(info,filter);
+			
+		})
+		.complete(function() { 
+			times.push(new Date().getTime());
+			
+		});
+		jqxhr.complete(function(){ 
+			times.push(new Date().getTime());
+			var testinfo ="time used:"+(times[2] - times[0]) / 1000 + "sec. \n"  + "all Count:"+ (allCount +1 ) +"items."; 
+			$(".info").html(testinfo);
+			
+		});
+	}//function showProductJson end
+	
+	
+
+	
+
+	function addQueryPara(para,value){
+		var _url = window.location.href;
+		if(_url.indexOf('?') != -1){
+			if(para + '='.indexOf(_url) != -1){
+				_url =_url.split('?')[0] + '?';
+				var _temp = getQueryPara(), _tempArr = [];
+				_temp[para] = value;
+				for (key in _temp){
+					_tempArr.push(key + '=' + _temp[key])
+				}
+				_url += _tempArr.join('&');
+			}else{
+				_url += '&' + para + '=' + value;
+			}			
+		}else{
+			_url += '?' + para + '=' + value;
+		}
+		return _url;
+	}
+	function getQueryPara(){
+		var _Paras = {} , _url = window.location.href;
+		if(_url.indexOf('?') != -1){
+			var _ParaArr = _url.split('?')[1].split('&');
+			
+			for(var i=0; i<_ParaArr.length; i++){
+				var _temp = _ParaArr[i].split('=');
+				_Paras[_temp[0]] = _temp[1];
+			}
+		}
+		return _Paras;
+	}
+
+	var filter = {showmore:'1',p:'1'};
+	$.extend(filter,getQueryPara())
+	if(filter.size && filter.size != 'off'){
+		$('.size').hide();
+		$('.clearsize').show().find('span').text('size:' + filter.size);
+	}
+	if(filter.sort){
+		$('.sorter').val(filter.sort);
+	}
+	showProductJson({url:'json.php',tag:'all'},filter);
+
+	$('.sorter').change(function(){
+		if($(this).val() != ''){
+			window.location = addQueryPara('sort',$(this).val());
+		}
+	})
+	$('.size span').click(function(){
+		$(this).toggleClass('selected');
+		var sizeValue = $('#size_input').val() == '' ? []:$('#size_input').val().split('|');
+		if($(this).hasClass('selected')){
+			sizeValue.push($(this).attr('title'));
+		}else{
+			sizeValue.splice(sizeValue.indexOf($(this).attr('title')),1);
+		}
+		$('#size_input').val(sizeValue.join('|'));
+	})
+	$(".filter").click(function(e){
+		e.preventDefault();
+		window.location = addQueryPara('size',$('#size_input').val());
+
+	});
+	$('.clearsize').click(function(e){
+		e.preventDefault();
+		window.location = addQueryPara('size','off');
+	})
+	$('.pager a').live('click', function(e){
+		e.preventDefault();
+		window.location = addQueryPara('p',$(this).text());
+	})
+
+Array.prototype.indexOf = function(val) {              
+    for (var i = 0; i < this.length; i++) {  
+        if (this[i] == val) return i;  
+    }  
+    return -1;  
+}; 
+</script>
+
+
+  </body>
+
+ </html>
