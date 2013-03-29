@@ -19,7 +19,7 @@
 <html> 
   <head> 
     <meta charset="utf-8" /> 
-    <title>Glamour Sales China v2 test</title> 
+    <title>Glamour Sales China v3 test</title> 
     <link href="css/style.css" rel="stylesheet" type="text/css" /> 
     <link href="css/jqtransform.css" rel="stylesheet" type="text/css" /> 
     
@@ -37,6 +37,7 @@
 		<header id="branding">
 			<hgroup>
 				<h1 class="logo">Glamour Sales V3 research</h1>
+				<p id="timer"></p>
 			</hgroup>
 			<div class="">
 	            <select class="sorter">
@@ -203,7 +204,8 @@ if (!Array.prototype.indexOf) Array.prototype.indexOf = function(item, i) {
 						items.push('<ul class="list page-' + i + '">' + pageItem.join('') + '</ul>');
 						pager.push('<a href="#" class="active pager-' + i + '">' + i + '</a>');	
 					}else{
-						items.push('<ul class="list page-' + i + '"'+_hide+'>' + pageItem.join('') + '</ul>');
+						// only display current page
+						//items.push('<ul class="list page-' + i + '"'+_hide+'>' + pageItem.join('') + '</ul>');
 						pager.push('<a href="#"  class="pager-' + i + '">' + i + '</a>');
 					}
 
@@ -215,6 +217,9 @@ if (!Array.prototype.indexOf) Array.prototype.indexOf = function(item, i) {
 			$('.productlist').empty().append(items.join(''));
 			$('.pager').html(pager.join(''));
 			//
+			var endD = new Date();
+			var usingTime = endD.getTime() - startD.getTime(); console.log(usingTime);
+			$('#timer').text('Using : ' + usingTime + 'ms')
 		},100);	
 
 	}
@@ -290,6 +295,8 @@ if (!Array.prototype.indexOf) Array.prototype.indexOf = function(item, i) {
 		}
 		return _Paras;
 	}
+
+	var startD = new Date();
 
 	var filter = {showmore:'1',p:'1'};
 	$.extend(filter,getQueryPara()); 
